@@ -1,0 +1,77 @@
+/* ==========================================================================
+   oxocarbon-morph :: waybar
+   Sharp lines, zero radius, zero shadow. Accent color is injected by the
+   `theme` engine via oxocarbon-colors.css on every theme switch.
+   ========================================================================== */
+
+@import "oxocarbon-colors.css";
+
+* {
+    font-family: "BlexMono Nerd Font";
+    font-size: 11px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: @bg;
+    border-bottom: 1px solid @border;
+    color: @ink;
+}
+
+#workspaces {
+    margin: 0;
+    padding: 0;
+}
+
+#workspaces button {
+    padding: 0 12px;
+    background: transparent;
+    color: @muted;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+#workspaces button.focused {
+    color: @ink;
+    background-color: @surface;
+    border-bottom: 2px solid @accent;
+}
+
+#workspaces button:hover {
+    background-color: @surface;
+    color: @ink;
+    border-bottom: 2px solid @border;
+}
+
+#window {
+    padding: 0 14px;
+    color: @ink;
+    border-left: 1px solid @border;
+}
+
+#pulseaudio,
+#network,
+#battery,
+#clock {
+    padding: 0 12px;
+    color: @muted;
+    border-left: 1px solid @border;
+}
+
+#clock {
+    color: @ink;
+}
+
+#battery.warning {
+    color: @accent_alt;
+}
+
+#battery.critical {
+    color: @bg;
+    background-color: @accent_alt;
+}
+
+#tray {
+    padding: 0 8px;
+    border-left: 1px solid @border;
+}

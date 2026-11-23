@@ -1,4 +1,5 @@
 wallpapers/*.mp4
 wallpapers/*.webm
+engine/target/
 *.bak
 .DS_Store

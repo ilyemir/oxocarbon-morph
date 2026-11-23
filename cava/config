@@ -1,0 +1,39 @@
+# ============================================================================
+# oxocarbon-morph :: cava
+# The [color] section is rewritten by the `theme` engine on every theme
+# switch (pkill -USR1 cava reloads it live; press 'c' inside cava too).
+# ============================================================================
+
+[general]
+framerate = 60
+bars = 24
+autosens = 1
+
+[input]
+method = pulse
+source = auto
+
+[output]
+method = ncurses
+orientation = bottom
+channels = mono
+monstercat = 1
+waves = false
+
+[smoothing]
+noise_reduction = 77
+gravity = 100
+integral = 77
+
+[color]
+background = '#161616'
+foreground = '#f2f4f8'
+gradient = 1
+gradient_color_1 = '#ee5396'
+gradient_color_2 = '#ff3b3b'
+gradient_color_3 = '#ee5396'
+gradient_color_4 = '#ff3b3b'
+gradient_color_5 = '#ee5396'
+gradient_color_6 = '#ff3b3b'
+gradient_color_7 = '#ee5396'
+gradient_color_8 = '#ff3b3b'

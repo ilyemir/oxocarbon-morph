@@ -1,0 +1,10 @@
+{
+  "name": "Obsidian Mono",
+  "bg": "#0d0d0d",
+  "surface": "#1c1c1c",
+  "ink": "#f2f4f8",
+  "muted": "#7a7a7a",
+  "accent": "#f2f4f8",
+  "accent_alt": "#78a9ff",
+  "border": "#333333"
+}

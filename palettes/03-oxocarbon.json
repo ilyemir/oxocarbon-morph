@@ -1,0 +1,10 @@
+{
+  "name": "Oxocarbon Neon",
+  "bg": "#161616",
+  "surface": "#262626",
+  "ink": "#f2f4f8",
+  "muted": "#8d8d8d",
+  "accent": "#3ddbd9",
+  "accent_alt": "#ff7eb6",
+  "border": "#393939"
+}

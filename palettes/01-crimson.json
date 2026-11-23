@@ -1,0 +1,10 @@
+{
+  "name": "Crimson Void",
+  "bg": "#161616",
+  "surface": "#262626",
+  "ink": "#f2f4f8",
+  "muted": "#8d8d8d",
+  "accent": "#ee5396",
+  "accent_alt": "#ff3b3b",
+  "border": "#393939"
+}

@@ -1,0 +1,27 @@
+[package]
+name = "oxocarbon-engine"
+version = "0.1.0"
+edition = "2021"
+description = "oxocarbon-morph theme engine: theme CLI + event-driven battery shield daemon"
+license = "MIT"
+
+[lib]
+name = "oxocarbon_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "theme"
+path = "src/bin/theme.rs"
+
+[[bin]]
+name = "theme-daemon"
+path = "src/bin/theme_daemon.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

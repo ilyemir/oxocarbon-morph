@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: theme-hud  (Super + W)
+# Minimalist wallpaper picker: wallpaper name + palette label + live shield
+# state. Selecting a row applies the theme; the shield row toggles it.
+# ============================================================================
+set -euo pipefail
+
+STATE="$HOME/.config/oxocarbon-morph/state.json"
+THEME="$HOME/.local/bin/theme"
+current="$(jq -r '.current // ""' "$STATE")"
+shield="$(jq -r '.shield // true' "$STATE")"
+shield_txt="ON"
+[ "$shield" = "false" ] && shield_txt="OFF"
+
+entries=()
+names=()
+while IFS=$'\t' read -r name pal; do
+    [ -z "$name" ] && continue
+    mark="  "
+    [ "$name" = "$current" ] && mark="> "
+    entries+=("${mark}${name}  [${pal}]")
+    names+=("$name")
+done < <("$THEME" list --plain)
+
+entries+=("-- PIL KALKANI: ${shield_txt} (degistir) --")
+
+# Debug mode: print what the HUD would show, without opening wofi.
+if [ "${1:-}" = "--print" ]; then
+    printf '%s\n' "${entries[@]}"
+    exit 0
+fi
+
+sel="$(printf '%s\n' "${entries[@]}" | wofi --dmenu --prompt "[SHIELD: ${shield_txt}] theme" --cache-file /dev/null -i)"
+[ -z "$sel" ] && exit 0
+
+if [[ "$sel" == "-- PIL KALKANI:"* ]]; then
+    exec "$THEME" shield toggle
+fi
+
+idx=-1
+for i in "${!entries[@]}"; do
+    [ "${entries[$i]}" = "$sel" ] && idx=$i
+done
+if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#names[@]}" ]; then
+    exec "$THEME" set "${names[$idx]}"
+fi
+exit 0

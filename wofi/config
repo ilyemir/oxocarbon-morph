@@ -1,0 +1,10 @@
+# oxocarbon-morph :: wofi
+width=640
+height=420
+show=drun
+prompt=run
+matching=fuzzy
+insensitive=true
+allow_images=false
+term=kitty
+key_expand=Tab
