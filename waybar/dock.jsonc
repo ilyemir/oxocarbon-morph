@@ -1,0 +1,37 @@
+{
+  "name": "dock",
+  "layer": "top",
+  "position": "bottom",
+  "height": 42,
+  "spacing": 0,
+  "modules-left": [@@DOCK_LEFT@@],
+  "modules-center": ["wlr/taskbar"],
+  "modules-right": ["tray", "custom/scr"],
+
+  "custom/launcher": {
+    "format": "[ APPS ]",
+    "tooltip": false,
+    "on-click": "wofi --show drun"
+  },
+
+  @@DOCK_MODULES@@
+
+  "wlr/taskbar": {
+    "format": "{icon}",
+    "icon-size": 22,
+    "icon-theme": ["oxocarbon-morph"],
+    "on-click": "minimize-raise",
+    "on-click-middle": "close",
+    "tooltip-format": "{title}"
+  },
+
+  "tray": {
+    "spacing": 8
+  },
+
+  "custom/scr": {
+    "format": "[SCR]",
+    "tooltip": false,
+    "on-click": "grim -g \"$(slurp)\" - | wl-copy"
+  }
+}

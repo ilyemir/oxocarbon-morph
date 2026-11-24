@@ -1,24 +1,47 @@
 use oxocarbon_engine::outln;
-use oxocarbon_engine::{daemon, daemon::Decision, mpv, palette::Palette, state::State, sync, wallpaper};
+use oxocarbon_engine::{
+    daemon, daemon::Decision, frames, hypr, icons, mpv, palette::Palette, paths, state::State,
+    sync, wallpaper,
+};
 use std::process::{Command, Stdio};
 
 const USAGE: &str = "Kullanim:
   theme status                 Aktif tema ve durum ozeti
   theme list [--plain]         Duvar kagitlarini listele (--plain: makine okunur)
-  theme set <isim>             Tema sec (ornek: theme set obito)
+  theme set <isim>             Tema sec (ornek: theme set crimson, theme set 02-crimson)
   theme start                  Kayitli temayi oturum baslangicinda uygula
   theme next | prev            Siradaki / onceki tema
   theme pause                  Manuel duraklat / devam (toggle)
-  theme shield on|off|toggle   Pil kalkani";
+  theme shield on|off|toggle   Pil kalkani
+  theme pill                   Waybar tema modulu ciktisi (JSON)
+  theme shield-status          Waybar pil kalkani modulu ciktisi (JSON)
+  theme magic toggle           special:magic cep ac/kapa (Super+S)
+  theme sync-icons             Simge setini ve dock'u yeniden uret";
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     std::process::exit(run(&args));
 }
 
+fn mpvpaper_running() -> bool {
+    Command::new("pgrep")
+        .args(["-x", "mpvpaper"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
 fn run(args: &[String]) -> i32 {
     let cmd = args.first().map(String::as_str).unwrap_or("status");
     match cmd {
+        // hidden: detached frame-cache generator (spawned by sync::apply)
+        "__frames" => {
+            frames::generate_all(args.get(1).map(String::as_str).unwrap_or(""));
+            0
+        }
         "status" | "-s" => show_status(),
         "list" | "-l" => show_list(args.get(1).map(String::as_str) == Some("--plain")),
         "start" => start_current(),
@@ -38,6 +61,10 @@ fn run(args: &[String]) -> i32 {
         "next" | "prev" => cycle(cmd),
         "pause" => toggle_pause(),
         "shield" => shield(args.get(1).map(String::as_str)),
+        "pill" => pill(),
+        "shield-status" => shield_status(),
+        "magic" => magic(args.get(1).map(String::as_str)),
+        "sync-icons" => sync_icons(),
         "help" | "-h" | "--help" => {
             outln!("{}", USAGE);
             0
@@ -48,17 +75,6 @@ fn run(args: &[String]) -> i32 {
             1
         }
     }
-}
-
-fn mpvpaper_running() -> bool {
-    Command::new("pgrep")
-        .args(["-x", "mpvpaper"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
 }
 
 fn switch_to(wall: &str) -> i32 {
@@ -80,16 +96,18 @@ fn switch_to(wall: &str) -> i32 {
         Ok(rep) => {
             outln!("[OK] Tema    : {}", wall);
             outln!("[OK] Palet   : {} (accent {})", pal.name, pal.accent);
-            if rep.hyprland {
-                outln!("[OK] Hyprland kenarlik + mpvpaper guncellendi");
-            } else {
+            if !rep.hyprland {
                 outln!("[BILGI] Hyprland oturumu yok: kenarlik/mpvpaper atlandi, konfig dosyalari yazildi");
+            } else if rep.wallpaper_ipc {
+                outln!("[OK] Duvar kagidi: mpv IPC ile aninda degisti (yeniden baslatma yok)");
+            } else if rep.wallpaper_started {
+                outln!("[OK] Duvar kagidi: swaybg + mpvpaper akisiyla baslatildi");
+            } else {
+                outln!("[UYARI] Duvar kagidi: mpvpaper IPC yayina gecemedi");
             }
+            outln!("[OK] Simge   : {} uygulama simgesi paletle yeniden uretildi", rep.icons);
             if rep.kitty_live {
                 outln!("[OK] Acik kitty pencereleri renklendirildi");
-            }
-            if rep.lock_frame {
-                outln!("[OK] Hyprlock arka plan karesi guncellendi");
             }
             0
         }
@@ -129,6 +147,11 @@ fn show_status() -> i32 {
         }
     );
     outln!("mpvpaper    : {}", if mpvpaper_running() { "calisiyor" } else { "calismiyor" });
+    outln!("IPC         : {}", if mpv::available() { paths::MPV_SOCKET } else { "yok" });
+    match mpv::playing_path() {
+        Some(p) => outln!("Oynayan     : {}", p),
+        None => outln!("Oynayan     : -"),
+    }
     outln!(
         "Ayarlar     : {}",
         oxocarbon_engine::paths::config_dir().display()
@@ -241,5 +264,91 @@ fn shield(sub: Option<&str>) -> i32 {
         mpv::set_pause(false);
         outln!("Kalkan      : kapatildi -> oynatiliyor");
     }
+    sync::waybar_rtmin();
     0
+}
+
+// --- waybar module outputs ---------------------------------------------------
+
+fn pill() -> i32 {
+    let st = State::load();
+    let text = if st.current.is_empty() {
+        String::from("-")
+    } else {
+        oxocarbon_engine::palette::palette_prefix(&st.current)
+    };
+    outln!(
+        "{{\"text\": \"{}\", \"class\": \"themed\", \"tooltip\": \"{}\"}}",
+        oxocarbon_engine::json::escape(&text),
+        "sol tik: tema HUD (Super+W) - sag tik: sonraki tema"
+    );
+    0
+}
+
+fn shield_status() -> i32 {
+    let st = State::load();
+    let (text, class) = if st.shield {
+        ("SHIELD ON", "shield-on")
+    } else {
+        ("SHIELD OFF", "shield-off")
+    };
+    outln!(
+        "{{\"text\": \"{}\", \"class\": \"{}\", \"tooltip\": \"{}\"}}",
+        text,
+        class,
+        "pil kalkani: aktif workspace'te pencere varken duvar kagini duraklatir - tikla: ac/kapa"
+    );
+    0
+}
+
+// --- special:magic pocket -----------------------------------------------------
+
+fn magic(sub: Option<&str>) -> i32 {
+    match sub.unwrap_or("toggle") {
+        "toggle" => {
+            if !hypr::running() {
+                eprintln!("[HATA] Hyprland oturumu yok");
+                return 1;
+            }
+            // mark intent so the daemon does not "restore" windows the user
+            // is deliberately opening the pocket to see
+            let marker = paths::magic_marker();
+            let _ = std::fs::remove_file(&marker);
+            let _ = std::fs::write(&marker, b"1");
+            hypr::dispatch("togglespecialworkspace magic");
+            0
+        }
+        other => {
+            eprintln!("[HATA] Bilinmeyen magic alt komutu: {}", other);
+            eprintln!("Kullanim: theme magic toggle");
+            1
+        }
+    }
+}
+
+fn sync_icons() -> i32 {
+    let st = State::load();
+    if st.current.is_empty() {
+        eprintln!("[HATA] Aktif tema yok; once `theme set` ile bir tema secin");
+        return 1;
+    }
+    let pal = match Palette::for_wall(&st.current) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("[HATA] {}", e);
+            return 1;
+        }
+    };
+    match icons::sync(&pal) {
+        Ok(n) => {
+            outln!("[OK] {} uygulama simgesi uretildi ({})", n, pal.accent);
+            outln!("[OK] Icon theme: {}", paths::icon_theme_dir().display());
+            outln!("[OK] Dock      : {}", paths::dock_deployed().display());
+            0
+        }
+        Err(e) => {
+            eprintln!("[HATA] {}", e);
+            1
+        }
+    }
 }

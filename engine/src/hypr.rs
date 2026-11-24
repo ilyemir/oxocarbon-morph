@@ -86,6 +86,86 @@ pub fn windows_on_workspace(ws: i64) -> Option<usize> {
     Some(n)
 }
 
+/// Run one `hyprctl dispatch <arg>` (arg passed as a single argument).
+pub fn dispatch(arg: &str) -> bool {
+    Command::new("hyprctl")
+        .arg("dispatch")
+        .arg(arg)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+/// `activewindowv2>>5e17...` -> `0x5e17...` (clients -j carries the 0x prefix).
+fn normalize_addr(addr: &str) -> Option<String> {
+    let a = addr.trim().to_lowercase();
+    if a.is_empty() {
+        return None;
+    }
+    if a.starts_with("0x") {
+        Some(a)
+    } else {
+        Some(format!("0x{}", a))
+    }
+}
+
+/// Is the given window address currently sitting on special:magic?
+pub fn window_in_special(addr: &str) -> bool {
+    let Some(a) = normalize_addr(addr) else {
+        return false;
+    };
+    let Some(v) = hyprctl_json(&["clients"]) else {
+        return false;
+    };
+    let Some(arr) = v.as_array() else {
+        return false;
+    };
+    arr.iter().any(|c| {
+        let address = c.get("address").and_then(json::Value::as_str);
+        let ws = c
+            .get("workspace")
+            .and_then(|w| w.get("name"))
+            .and_then(json::Value::as_str);
+        address == Some(a.as_str()) && ws == Some("special:magic")
+    })
+}
+
+/// Name of the workspace currently focused (restore target for the pocket).
+pub fn focused_workspace_name() -> Option<String> {
+    let v = hyprctl_json(&["monitors"])?;
+    let arr = v.as_array()?;
+    arr.iter()
+        .find(|m| {
+            m.get("focused")
+                .and_then(json::Value::as_bool)
+                .unwrap_or(false)
+        })
+        .and_then(|m| m.get("activeWorkspace"))
+        .and_then(|w| w.get("name"))
+        .and_then(json::Value::as_str)
+        .map(String::from)
+}
+
+/// Is a special workspace overlay currently shown on any monitor?
+pub fn special_shown() -> bool {
+    let Some(v) = hyprctl_json(&["monitors"]) else {
+        return false;
+    };
+    let Some(arr) = v.as_array() else {
+        return false;
+    };
+    arr.iter().any(|m| {
+        m.get("specialWorkspace")
+            .and_then(|w| w.get("name"))
+            .and_then(json::Value::as_str)
+            .map(|s| !s.is_empty())
+            .unwrap_or(false)
+    })
+}
+
 /// Push live border colors (only when inside a Hyprland session).
 pub fn apply_border(pal: &Palette) {
     if !running() {

@@ -23,7 +23,9 @@ pub fn stem(name: &str) -> &str {
 }
 
 /// Resolve user query -> wallpaper filename.
-/// Match order: exact filename -> exact stem -> substring (first sorted hit).
+/// Match order: exact filename -> exact stem -> substring -> palette family.
+/// The family pass makes "02-crimson" resolve to the crimson palette even
+/// though crimson's real prefix index is 01 (same for "04-frost", "frost", ...).
 pub fn resolve(query: &str) -> Option<String> {
     let all = list();
     let ql = query.trim().to_lowercase();
@@ -37,9 +39,35 @@ pub fn resolve(query: &str) -> Option<String> {
     if let Some(n) = all.iter().find(|n| stem(n).to_lowercase() == qstem) {
         return Some(n.clone());
     }
-    all.iter()
+    if let Some(n) = all
+        .iter()
         .find(|n| n.to_lowercase().contains(&qstem))
-        .cloned()
+    {
+        return Some(n.clone());
+    }
+    // "02-crimson" -> family "crimson": drop pure-numeric tokens from the
+    // query and match them against the non-numeric part of every prefix.
+    let family: String = qstem
+        .split('-')
+        .filter(|t| !t.is_empty() && !t.chars().all(|c| c.is_ascii_digit()))
+        .collect::<Vec<_>>()
+        .join("-");
+    if !family.is_empty() {
+        let family_of = |wall: &str| -> String {
+            crate::palette::palette_prefix(wall)
+                .split('-')
+                .filter(|t| !t.is_empty() && !t.chars().all(|c| c.is_ascii_digit()))
+                .collect::<Vec<_>>()
+                .join("-")
+        };
+        if let Some(n) = all.iter().find(|n| family_of(n) == family) {
+            return Some(n.clone());
+        }
+        if let Some(n) = all.iter().find(|n| n.to_lowercase().contains(&family)) {
+            return Some(n.clone());
+        }
+    }
+    None
 }
 
 pub fn index_of(wall: &str) -> Option<usize> {

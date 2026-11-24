@@ -1,7 +1,9 @@
 /* ==========================================================================
-   oxocarbon-morph :: waybar
-   Sharp lines, zero radius, zero shadow. Accent color is injected by the
-   `theme` engine via oxocarbon-colors.css on every theme switch.
+   oxocarbon-morph :: waybar top bar (v1.0)
+   Sharp lines, zero radius, zero shadow. The palette accent is injected by
+   the `theme` engine via oxocarbon-colors.css on every switch and drives the
+   active workspace block, the theme pill and every hover state.
+   Font: BlexMono Nerd Font.
    ========================================================================== */
 
 @import "oxocarbon-colors.css";
@@ -18,13 +20,16 @@ window#waybar {
     color: @ink;
 }
 
+/* --- workspaces: Windows-style accent block on the active one ------------- */
+
 #workspaces {
     margin: 0;
     padding: 0;
 }
 
 #workspaces button {
-    padding: 0 12px;
+    padding: 0 11px;
+    min-width: 14px;
     background: transparent;
     color: @muted;
     border: none;
@@ -32,8 +37,9 @@ window#waybar {
 }
 
 #workspaces button.focused {
-    color: @ink;
-    background-color: @surface;
+    background-color: @accent;
+    color: @bg;
+    font-weight: 700;
     border-bottom: 2px solid @accent;
 }
 
@@ -45,20 +51,41 @@ window#waybar {
 
 #window {
     padding: 0 14px;
-    color: @ink;
+    color: @muted;
     border-left: 1px solid @border;
 }
 
+/* --- center: active theme pill -------------------------------------------- */
+
+#custom-theme-pill {
+    margin: 4px 0;
+    padding: 0 16px;
+    border: 1px solid @accent;
+    color: @ink;
+    background-color: transparent;
+}
+
+#custom-theme-pill:hover {
+    background-color: @accent;
+    color: @bg;
+}
+
+/* --- right cluster ---------------------------------------------------------- */
+
+#custom-shield,
 #pulseaudio,
 #network,
-#battery,
-#clock {
+#battery {
     padding: 0 12px;
     color: @muted;
     border-left: 1px solid @border;
 }
 
-#clock {
+#custom-shield.shield-on {
+    color: @accent;
+}
+
+#custom-shield:hover {
     color: @ink;
 }
 
@@ -71,7 +98,20 @@ window#waybar {
     background-color: @accent_alt;
 }
 
-#tray {
-    padding: 0 8px;
+#clock {
+    padding: 0 12px;
+    font-size: 10px;
+    color: @ink;
     border-left: 1px solid @border;
+}
+
+#custom-power {
+    padding: 0 12px;
+    color: @muted;
+    border-left: 1px solid @border;
+}
+
+#custom-power:hover {
+    background-color: @accent;
+    color: @bg;
 }

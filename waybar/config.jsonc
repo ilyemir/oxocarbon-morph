@@ -1,17 +1,35 @@
 {
   "layer": "top",
   "position": "top",
-  "height": 28,
+  "height": 34,
   "spacing": 0,
   "modules-left": ["hyprland/workspaces", "hyprland/window"],
-  "modules-right": ["pulseaudio", "network", "battery", "clock", "tray"],
+  "modules-center": ["custom/theme-pill"],
+  "modules-right": ["custom/shield", "pulseaudio", "network", "battery", "clock", "custom/power"],
+
   "hyprland/workspaces": {
     "format": "{name}",
-    "on-click": "activate"
+    "on-click": "activate",
+    "persistent-workspaces": { "*": 9 }
   },
   "hyprland/window": {
-    "max-length": 48,
+    "max-length": 44,
     "separate-outputs": true
+  },
+  "custom/theme-pill": {
+    "exec": "/home/emir-alkan/.local/bin/theme pill",
+    "signal": 8,
+    "return-type": "json",
+    "on-click": "/home/emir-alkan/.local/bin/theme-hud",
+    "on-click-right": "/home/emir-alkan/.local/bin/theme next",
+    "tooltip": true
+  },
+  "custom/shield": {
+    "exec": "/home/emir-alkan/.local/bin/theme shield-status",
+    "signal": 8,
+    "return-type": "json",
+    "on-click": "/home/emir-alkan/.local/bin/theme shield toggle",
+    "tooltip": true
   },
   "pulseaudio": {
     "format": "VOL {volume}%",
@@ -34,10 +52,12 @@
     "tooltip": false
   },
   "clock": {
-    "format": "{:%H:%M}",
+    "format": "{:%H:%M}\n{:%d.%m}",
     "tooltip-format": "{:%Y-%m-%d %H:%M}"
   },
-  "tray": {
-    "spacing": 8
+  "custom/power": {
+    "format": "[ PWR ]",
+    "tooltip": "cikis menusu (Super+X)",
+    "on-click": "/home/emir-alkan/.local/bin/power-menu"
   }
 }

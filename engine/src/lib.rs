@@ -1,6 +1,8 @@
 pub mod cava;
 pub mod daemon;
+pub mod frames;
 pub mod hypr;
+pub mod icons;
 pub mod json;
 pub mod mpv;
 pub mod palette;

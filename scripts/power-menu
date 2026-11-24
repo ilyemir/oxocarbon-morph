@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: power-menu  (Super+X / [ PWR ])
+# Wofi dmenu power session picker. ASCII Turkish labels.
+#   --print      : list entries without opening wofi (debug)
+#   OXO_DRY_RUN=1: print the chosen action instead of executing it
+# ============================================================================
+set -euo pipefail
+
+entries="Kapat\nYeniden Baslat\nUyku\nKilitle\nOturumu Kapat"
+
+if [ "${1:-}" = "--print" ]; then
+    printf '%b' "$entries"
+    exit 0
+fi
+
+sel="$(printf '%b' "$entries" | wofi --dmenu --prompt "cikis" --cache-file /dev/null -i)"
+[ -z "$sel" ] && exit 0
+
+case "$sel" in
+    "Kapat")          action="systemctl poweroff" ;;
+    "Yeniden Baslat") action="systemctl reboot" ;;
+    "Uyku")           action="systemctl suspend" ;;
+    "Kilitle")        action="/home/emir-alkan/.local/bin/hyprlock" ;;
+    "Oturumu Kapat")  action="hyprctl dispatch exit" ;;
+    *) exit 0 ;;
+esac
+
+if [ "${OXO_DRY_RUN:-0}" = "1" ]; then
+    printf '[DRY] %s\n' "$action"
+    exit 0
+fi
+
+exec sh -c "$action"

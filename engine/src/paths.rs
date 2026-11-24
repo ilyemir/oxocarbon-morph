@@ -3,7 +3,9 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-pub const MPV_SOCKET: &str = "/tmp/mpv-socket";
+pub const MPV_SOCKET: &str = "/tmp/mpvpaper.sock";
+/// Pre-v1.0 socket; cleared during migration so a stale file never blocks IPC.
+pub const MPV_SOCKET_LEGACY: &str = "/tmp/mpv-socket";
 
 pub fn home() -> PathBuf {
     PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/root".into()))
@@ -59,6 +61,54 @@ pub fn cache_dir() -> PathBuf {
 
 pub fn lock_image() -> PathBuf {
     cache_dir().join("lock.png")
+}
+
+// --- v1.0: SVG icon engine -------------------------------------------------
+
+pub fn icons_dir() -> PathBuf {
+    cache_dir().join("icons")
+}
+
+/// Local icon theme serving wlr/taskbar (index.theme + apps/scalable links).
+pub fn icon_theme_dir() -> PathBuf {
+    home()
+        .join(".local")
+        .join("share")
+        .join("icons")
+        .join("oxocarbon-morph")
+}
+
+// --- v1.0: wallpaper frame cache -------------------------------------------
+
+pub fn frames_dir() -> PathBuf {
+    cache_dir().join("frames")
+}
+
+pub fn frame_path(wall: &str) -> PathBuf {
+    frames_dir().join(format!("{}.png", crate::wallpaper::stem(wall)))
+}
+
+// --- v1.0: dock + hyprland color file ---------------------------------------
+
+/// Repo-side dock template (contains @@DOCK_*@@ markers).
+pub fn dock_template() -> PathBuf {
+    base().join("waybar").join("dock.jsonc")
+}
+
+/// Engine-generated dock config (real file; never a symlink).
+pub fn dock_deployed() -> PathBuf {
+    home().join(".config").join("waybar").join("dock.jsonc")
+}
+
+/// Border colors sourced by hyprland.conf; written atomically on every switch.
+pub fn hypr_colors() -> PathBuf {
+    home().join(".config").join("hypr").join("hyprland-colors.conf")
+}
+
+/// Set by `theme magic toggle` while the user opens special:magic on purpose;
+/// the daemon clears it when the overlay closes (activespecial>> empty).
+pub fn magic_marker() -> PathBuf {
+    cache_dir().join("magic-open")
 }
 
 /// Write `data` to `path` atomically (tmp file in same dir + fsync + rename).
