@@ -106,6 +106,7 @@ fn switch_to(wall: &str) -> i32 {
                 outln!("[UYARI] Duvar kagidi: mpvpaper IPC yayina gecemedi");
             }
             outln!("[OK] Simge   : {} uygulama simgesi paletle yeniden uretildi", rep.icons);
+            outln!("[OK] Imlec   : {} sekil uretildi (hyprcursor + XCursor)", rep.cursors);
             if rep.kitty_live {
                 outln!("[OK] Acik kitty pencereleri renklendirildi");
             }

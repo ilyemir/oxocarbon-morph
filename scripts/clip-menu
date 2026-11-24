@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: clip-menu  (Super+C)
+# Fast Wofi clipboard history picker. Selecting an entry puts the exact
+# stored bytes back on the clipboard (wl-copy).
+# ============================================================================
+set -euo pipefail
+
+HIST="$HOME/.cache/oxocarbon-morph/cliphist"
+
+if [ ! -s "$HIST" ]; then
+    hyprctl notify 0 1200 "rgb(141,141,141)" "PANO BOS" >/dev/null
+    exit 0
+fi
+
+mapfile -t lines < <(grep -vxF -- '' "$HIST" | head -n 100)
+[ "${#lines[@]}" -gt 0 ] || exit 0
+
+previews=()
+for enc in "${lines[@]}"; do
+    txt="$(printf '%s' "$enc" | base64 -d 2>/dev/null || true)"
+    bytes="$(printf '%s' "$txt" | wc -c)"
+    one="$(printf '%s' "$txt" | tr '\n\r\t' '   ' | head -c 72)"
+    previews+=("${one}  [${bytes}b]")
+done
+
+sel="$(printf '%s\n' "${previews[@]}" | wofi --dmenu --prompt 'pano' --cache-file /dev/null -i)"
+[ -n "$sel" ] || exit 0
+
+for i in "${!previews[@]}"; do
+    if [ "${previews[$i]}" = "$sel" ]; then
+        printf '%s' "${lines[$i]}" | base64 -d | wl-copy
+        exit 0
+    fi
+done

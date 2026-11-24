@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: clip-store
+# Clipboard history writer. Started once per session via
+#   exec-once = wl-paste --watch ~/.local/bin/clip-store
+# Every clipboard change arrives on stdin: text payloads (<= 8 KB, no
+# control bytes) are stored base64-encoded, newest first, deduped, max 100.
+# ============================================================================
+set -euo pipefail
+
+HIST="$HOME/.cache/oxocarbon-morph/cliphist"
+mkdir -p "$(dirname "$HIST")"
+
+data="$(head -c 8192)" || exit 0
+[ -n "$data" ] || exit 0
+
+# skip binary payloads (keep \t \n \r; UTF-8 high bytes are fine)
+if printf '%s' "$data" | LC_ALL=C grep -qP '[\x01-\x08\x0B\x0C\x0E-\x1F]'; then
+    exit 0
+fi
+
+enc="$(printf '%s' "$data" | base64 -w0)"
+
+tmp="$(mktemp "${HIST}.XXXXXX")"
+{
+    printf '%s\n' "$enc"
+    if [ -f "$HIST" ]; then
+        # older copies (dedup) capped at 99; `|| true` guards head SIGPIPE
+        grep -vxF -- "$enc" "$HIST" | head -n 99 || true
+    fi
+} > "$tmp"
+mv -f "$tmp" "$HIST"

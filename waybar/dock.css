@@ -33,9 +33,15 @@ window#waybar {
     background-color: @surface;
 }
 
-/* --- pinned app buttons (image modules) ------------------------------------- */
+/* --- pinned app buttons (image modules) -------------------------------------
+   Waybar 0.15 renders an `image#<id>` module as node #image with class <id>,
+   so icons are styled with #image / #image.<id>. Ids containing dots (e.g.
+   org.gnome.Nautilus) cannot be addressed individually by CSS — the generic
+   #image rules above cover every pin including those. */
 
-#image {
+#image,
+#image.kitty,
+#image.firefox_firefox {
     margin: 0 6px;
 }
 

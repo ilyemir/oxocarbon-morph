@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: oxo-osd
+# Clean on-screen feedback for volume / brightness keys, rendered by
+# Hyprland's built-in notifier (hyprctl notify) in the active palette
+# accent color. Zero extra daemons, zero dependencies beyond jq + hyprctl.
+#
+# usage: oxo-osd vol up|down|mute | oxo-osd bri up|down
+# ============================================================================
+set -euo pipefail
+
+PAL="$HOME/.config/oxocarbon-morph/active-palette.json"
+accent="#82cfff"
+accent_alt="#ff3b3b"
+if [ -r "$PAL" ]; then
+    accent="$(jq -r '.accent // "#82cfff"' "$PAL")"
+    accent_alt="$(jq -r '.accent_alt // "#ff3b3b"' "$PAL")"
+fi
+
+hex2rgb() {
+    local h="${1#\#}"
+    printf 'rgb(%d,%d,%d)' \
+        "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
+}
+
+bar() { # bar <0-100>
+    local filled=$(( $1 * 12 / 100 )) out="" i
+    for i in $(seq 1 12); do
+        if [ "$i" -le "$filled" ]; then out+="#"; else out+="-"; fi
+    done
+    printf '%s' "$out"
+}
+
+show() { # show <color> <text>
+    hyprctl notify 0 1200 "$1" "$2" >/dev/null
+}
+
+case "${1:-} ${2:-}" in
+    "vol up")   wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+ ;;
+    "vol down") wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
+    "vol mute") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+    "bri up")   brightnessctl set +5% ;;
+    "bri down") brightnessctl set 5%- ;;
+    *) echo "kullanim: oxo-osd vol up|down|mute | bri up|down" >&2; exit 1 ;;
+esac
+
+case "${1:-}" in
+    vol)
+        v="$(wpctl get-volume @DEFAULT_AUDIO_SINK@)"
+        if printf '%s' "$v" | grep -q MUTED; then
+            show "$(hex2rgb "$accent_alt")" "VOL MUTE [------------]"
+        else
+            pct="$(printf '%s' "$v" | awk '{print int($2 * 100)}')"
+            show "$(hex2rgb "$accent")" "VOL ${pct}% [$(bar "$pct")]"
+        fi
+        ;;
+    bri)
+        pct="$(brightnessctl info | grep -oP '\(\d+%\)' | tr -d '()%')"
+        [ -n "$pct" ] || exit 0
+        show "$(hex2rgb "$accent")" "BRI ${pct}% [$(bar "$pct")]"
+        ;;
+esac

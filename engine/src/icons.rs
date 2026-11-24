@@ -394,14 +394,14 @@ fn write_dock(apps: &[AppEntry]) -> Result<(), String> {
         .collect();
 
     let mut left = vec!["\"custom/launcher\"".to_string()];
-    left.extend(pinned.iter().map(|a| format!("\"image/{}\"", a.id)));
+    left.extend(pinned.iter().map(|a| format!("\"image#{}\"", a.id)));
     let left_json = left.join(", ");
 
     let modules: Vec<String> = pinned
         .iter()
         .map(|a| {
             format!(
-                "\"image/{id}\": {{\n      \"path\": \"{path}\",\n      \"size\": 22,\n      \"tooltip\": \"{tip}\",\n      \"on-click\": \"gtk-launch {id}\"\n    }}",
+                "\"image#{id}\": {{\n      \"path\": \"{path}\",\n      \"size\": 22,\n      \"tooltip\": \"{tip}\",\n      \"on-click\": \"gtk-launch {id}\"\n    }}",
                 id = a.id,
                 path = paths::icons_dir().join(format!("{}.svg", a.id)).display(),
                 tip = json::escape(&a.name),

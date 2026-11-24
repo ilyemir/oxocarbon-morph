@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: snap  (Super+Left / Super+Right)
+# Windows-style half-screen snap.
+#   tiled windows    -> movewindow l/r (native tiling tree)
+#   floating windows -> exact half geometry inside the bar-safe work area
+# ============================================================================
+set -euo pipefail
+
+side="${1:-left}"
+case "$side" in
+    left)  dir=l ;;
+    right) dir=r ;;
+    *)     exit 1 ;;
+esac
+
+win="$(hyprctl activewindow -j 2>/dev/null)" || exit 0
+[ -n "$win" ] || exit 0
+addr="$(printf '%s' "$win" | jq -r '.address // empty')"
+[ -n "$addr" ] || exit 0
+floating="$(printf '%s' "$win" | jq -r '.floating // false')"
+
+if [ "$floating" != "true" ]; then
+    hyprctl dispatch movewindow "$dir" >/dev/null
+    exit 0
+fi
+
+# focused monitor + reserved space (reserved = left top right bottom)
+read -r mx my mw mh rsl rst rsr rsb <<< "$(hyprctl monitors -j | jq -r \
+    '.[] | select(.focused) | "\(.x) \(.y) \(.width) \(.height) \(.reserved[0]) \(.reserved[1]) \(.reserved[2]) \(.reserved[3])"')"
+
+# bar-safe work area
+wx=$((mx + rsl)); wy=$((my + rst))
+ww=$((mw - rsl - rsr)); wh=$((mh - rst - rsb))
+
+# half geometry with an 8px breathing gap
+w=$((ww / 2 - 8)); h=$((wh - 16))
+if [ "$side" = "left" ]; then
+    x=$((wx + 8))
+else
+    x=$((wx + ww - w - 8))
+fi
+y=$((wy + 8))
+
+hyprctl dispatch resizewindowpixel "exact ${w} ${h}",address:"$addr" >/dev/null
+hyprctl dispatch movewindowpixel "exact ${x} ${y}",address:"$addr" >/dev/null

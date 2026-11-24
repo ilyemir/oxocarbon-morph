@@ -100,7 +100,7 @@ pub fn spawn(wall: &str) -> Result<(), String> {
         return Err(format!("duvar kagidi yok: {}", path.display()));
     }
     let opts = format!(
-        "--input-ipc-server={} --hwdec=vaapi --vo=gpu --loop-file=inf --no-audio --demuxer-readahead-secs=0.5",
+        "--input-ipc-server={} --hwdec=vaapi --loop-file=inf --no-audio --demuxer-readahead-secs=0.5",
         paths::MPV_SOCKET
     );
     let status = Command::new("mpvpaper")

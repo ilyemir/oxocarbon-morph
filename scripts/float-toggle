@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ============================================================================
+# oxocarbon-morph :: float-toggle  (Super+V)
+# Toggle a window between tiled and floating. Entering floating mode sizes
+# it to 80% x 80% of the monitor and centers it — the "ideal" dialog size.
+# ============================================================================
+set -euo pipefail
+
+hyprctl dispatch togglefloating >/dev/null
+sleep 0.15
+
+win="$(hyprctl activewindow -j 2>/dev/null)" || exit 0
+[ -n "$win" ] || exit 0
+floating="$(printf '%s' "$win" | jq -r '.floating // false')"
+
+if [ "$floating" = "true" ]; then
+    hyprctl dispatch resizeactive 'exact 80% 80%' >/dev/null
+    hyprctl dispatch centerwindow >/dev/null
+fi

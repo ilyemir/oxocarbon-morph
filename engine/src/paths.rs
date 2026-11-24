@@ -78,6 +78,17 @@ pub fn icon_theme_dir() -> PathBuf {
         .join("oxocarbon-morph")
 }
 
+// --- v1.0: dynamic cursor theme ----------------------------------------------
+
+/// Palette-driven cursor theme (hyprcursor SVGs + XCursor binaries).
+pub fn cursor_theme_dir() -> PathBuf {
+    home()
+        .join(".local")
+        .join("share")
+        .join("icons")
+        .join("oxocarbon-cursor")
+}
+
 // --- v1.0: wallpaper frame cache -------------------------------------------
 
 pub fn frames_dir() -> PathBuf {
@@ -113,6 +124,10 @@ pub fn magic_marker() -> PathBuf {
 
 /// Write `data` to `path` atomically (tmp file in same dir + fsync + rename).
 pub fn atomic_write(path: &Path, data: &str) -> io::Result<()> {
+    atomic_write_bytes(path, data.as_bytes())
+}
+
+pub fn atomic_write_bytes(path: &Path, data: &[u8]) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -124,7 +139,7 @@ pub fn atomic_write(path: &Path, data: &str) -> io::Result<()> {
     {
         use std::io::Write;
         let mut f = std::fs::File::create(&tmp)?;
-        f.write_all(data.as_bytes())?;
+        f.write_all(data)?;
         f.sync_all().ok();
     }
     std::fs::rename(&tmp, path)?;

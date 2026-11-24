@@ -5,7 +5,7 @@
 //! IPC `loadfile` when a live socket answers (<80ms, zero respawn), else via
 //! the swaybg + mpvpaper boot flow. Frame generation never blocks a switch.
 
-use crate::{cava, daemon, frames, hypr, icons, json, mpv, palette::Palette, paths};
+use crate::{cava, cursor, daemon, frames, hypr, icons, json, mpv, palette::Palette, paths};
 use std::fs;
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -20,6 +20,8 @@ pub struct SyncReport {
     pub kitty_live: bool,
     /// number of palette-baked icons rendered
     pub icons: usize,
+    /// number of cursor shapes regenerated (hyprcursor + XCursor)
+    pub cursors: usize,
 }
 
 fn write_active_palette(pal: &Palette) -> Result<(), String> {
@@ -308,6 +310,11 @@ pub fn apply(wall: &str, pal: &Palette) -> Result<SyncReport, String> {
         Err(e) => return Err(format!("ikon motoru: {}", e)),
     };
 
+    let cursors = match cursor::sync(pal) {
+        Ok(n) => n,
+        Err(e) => return Err(format!("imlec motoru: {}", e)),
+    };
+
     frames::link_lock_image(wall);
 
     let in_hypr = hypr::running();
@@ -337,5 +344,6 @@ pub fn apply(wall: &str, pal: &Palette) -> Result<SyncReport, String> {
         hyprland: in_hypr,
         kitty_live,
         icons,
+        cursors,
     })
 }

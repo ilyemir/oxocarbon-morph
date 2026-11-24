@@ -1,4 +1,5 @@
 pub mod cava;
+pub mod cursor;
 pub mod daemon;
 pub mod frames;
 pub mod hypr;
