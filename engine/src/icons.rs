@@ -401,7 +401,7 @@ fn write_dock(apps: &[AppEntry]) -> Result<(), String> {
         .iter()
         .map(|a| {
             format!(
-                "\"image#{id}\": {{\n      \"path\": \"{path}\",\n      \"size\": 22,\n      \"tooltip\": \"{tip}\",\n      \"on-click\": \"gtk-launch {id}\"\n    }}",
+                "\"image#{id}\": {{\n      \"path\": \"{path}\",\n      \"size\": 22,\n      \"interval\": \"once\",\n      \"tooltip\": \"{tip}\",\n      \"on-click\": \"gtk-launch {id}\"\n    }}",
                 id = a.id,
                 path = paths::icons_dir().join(format!("{}.svg", a.id)).display(),
                 tip = json::escape(&a.name),
